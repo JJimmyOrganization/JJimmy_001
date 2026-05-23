@@ -7,7 +7,7 @@
 <meta name="description" content="IT 인프라 설계부터 디지털 전환(DX) 전략까지, 검증된 전문가가 함께합니다.">
 
 <!-- Supabase SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1334,12 +1334,17 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 let supabase = null;
 
 function initSupabase() {
-  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
-    console.warn('[NEXUS] Supabase 미설정 — 로컬 모드로 동작합니다.');
-    return;
-  }
   try {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // SDK는 window.supabase 또는 window.supabaseJs 로 노출될 수 있음
+    const sdk = (window.supabase && window.supabase.createClient)
+      ? window.supabase
+      : (window.supabaseJs || null);
+
+    if (!sdk) {
+      console.warn('[NEXUS] Supabase SDK 로드 실패 — 버튼은 정상 작동합니다.');
+      return;
+    }
+    supabase = sdk.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     checkSession();
   } catch(e) {
     console.error('[NEXUS] Supabase 초기화 실패:', e);
@@ -1540,8 +1545,10 @@ function showMsg(el, text, type) {
 // Keyboard: ESC closes modal
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-// Init
-initSupabase();
+// SDK 로드 완료 후 init (타이밍 문제 방지)
+document.addEventListener('DOMContentLoaded', () => {
+  initSupabase();
+});
 </script>
 </body>
 </html>
