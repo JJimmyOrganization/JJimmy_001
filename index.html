@@ -1331,7 +1331,7 @@ select option { background: var(--bg3); }
 const SUPABASE_URL = 'https://cuufegbmmmnsmcpunmhd.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dWZlZ2JtbW1uc21jcHVubWhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MDQ2ODksImV4cCI6MjA5NTA4MDY4OX0.lm_9aOdmbniOUYe3XXpl4l1AFIpGajQERrgg0NTJteU';
 
-let supabase = null;
+let sbClient = null;
 
 function initSupabase() {
   try {
@@ -1344,7 +1344,7 @@ function initSupabase() {
       console.warn('[NEXUS] Supabase SDK 로드 실패 — 버튼은 정상 작동합니다.');
       return;
     }
-    supabase = sdk.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sbClient = sdk.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     checkSession();
   } catch(e) {
     console.error('[NEXUS] Supabase 초기화 실패:', e);
@@ -1355,11 +1355,11 @@ function initSupabase() {
 // SESSION
 // ============================================================
 async function checkSession() {
-  if (!supabase) return;
-  const { data: { session } } = await supabase.auth.getSession();
+  if (!sbClient) return;
+  const { data: { session } } = await sbClient.auth.getSession();
   if (session) updateUserUI(session.user);
 
-  supabase.auth.onAuthStateChange((_event, session) => {
+  sbClient.auth.onAuthStateChange((_event, session) => {
     updateUserUI(session ? session.user : null);
   });
 }
@@ -1389,7 +1389,7 @@ async function doLogin() {
 
   if (!email || !password) { showMsg(msgEl, '이메일과 비밀번호를 입력해주세요.', 'err'); return; }
 
-  if (!supabase) {
+  if (!sbClient) {
     showMsg(msgEl, '⚠️ Supabase 미설정 (데모 모드)', 'ok');
     setTimeout(closeModal, 1500);
     return;
@@ -1397,7 +1397,7 @@ async function doLogin() {
 
   btn.disabled = true;
   btn.textContent = '로그인 중...';
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { error } = await sbClient.auth.signInWithPassword({ email, password });
   btn.disabled = false;
   btn.textContent = '로그인';
 
@@ -1417,14 +1417,14 @@ async function doRegister() {
   if (pw.length < 8) { showMsg(msgEl, '비밀번호는 8자 이상이어야 합니다.', 'err'); return; }
   if (pw !== pw2) { showMsg(msgEl, '비밀번호가 일치하지 않습니다.', 'err'); return; }
 
-  if (!supabase) {
+  if (!sbClient) {
     showMsg(msgEl, '⚠️ Supabase 미설정 (데모 모드)', 'ok');
     return;
   }
 
   btn.disabled = true;
   btn.textContent = '처리 중...';
-  const { error } = await supabase.auth.signUp({
+  const { error } = await sbClient.auth.signUp({
     email, password: pw,
     options: { data: { full_name: name } }
   });
@@ -1436,12 +1436,12 @@ async function doRegister() {
 }
 
 async function doSocialLogin(provider) {
-  if (!supabase) { alert('Supabase 설정 후 사용 가능합니다.'); return; }
-  await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.href } });
+  if (!sbClient) { alert('Supabase 설정 후 사용 가능합니다.'); return; }
+  await sbClient.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.href } });
 }
 
 async function logout() {
-  if (supabase) await supabase.auth.signOut();
+  if (sbClient) await sbClient.auth.signOut();
   updateUserUI(null);
 }
 
@@ -1466,8 +1466,8 @@ async function submitContact() {
   btn.disabled = true;
   btn.textContent = '전송 중...';
 
-  if (supabase) {
-    const { error } = await supabase.from('inquiries').insert([
+  if (sbClient) {
+    const { error } = await sbClient.from('inquiries').insert([
       { name, phone, email, company, inquiry_type: type, message }
     ]);
     if (error) {
