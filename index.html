@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS SYSTEMS — IT 인프라 · DX · 네트워크 컨설팅</title>
+<meta name="description" content="IT 인프라 설계부터 디지털 전환(DX) 전략까지, 검증된 전문가가 함께합니다.">
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   RESET & BASE
+============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+:root {
+  --bg:       #040912;
+  --bg2:      #080f1e;
+  --bg3:      #0b1525;
+  --card:     #0a1222;
+  --navy:     #111e36;
+  --border:   #1a2a45;
+  --border2:  #243552;
+  --accent:   #00c8f0;
+  --accent2:  #005aff;
+  --text:     #dde5f4;
+  --muted:    #5a7099;
+  --muted2:   #8aa0c0;
+  --success:  #00e0a0;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  overflow-x: hidden;
+  cursor: default;
+}
+
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; font-family: var(--font-body); }
+input, textarea, select {
+  font-family: var(--font-body);
+  color: var(--text);
+  outline: none;
+}
+input::placeholder, textarea::placeholder { color: var(--muted); }
+select option { background: var(--bg3); }
+
+/* ============================================================
+   SCROLLBAR
+============================================================ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ============================================================
+   UTILITY
+============================================================ */
+.sr-only { position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0); }
+.section-tag {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+.section-title {
+  font-family: var(--font-head);
+  font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.section-sub {
+  color: var(--muted2);
+  max-width: 500px;
+  margin-top: 0.8rem;
+  line-height: 1.8;
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0,200,240,0.07);
+  border: 1px solid rgba(0,200,240,0.2);
+  border-radius: 100px;
+  padding: 0.22rem 0.8rem;
+  font-size: 0.73rem;
+  color: var(--accent);
+}
+
+/* ============================================================
+   BUTTONS
+============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.88rem;
+  transition: all 0.22s ease;
+  border: none;
+  padding: 0.55rem 1.3rem;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff;
+}
+.btn-primary:hover { opacity: 0.82; transform: translateY(-1px); }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted2);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-lg {
+  padding: 0.85rem 2.1rem;
+  font-size: 0.95rem;
+  border-radius: 10px;
+}
+
+/* ============================================================
+   NAVBAR
+============================================================ */
+#navbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 500;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4rem;
+  background: rgba(4,9,18,0.8);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.3s;
+}
+.logo {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: 0.06em;
+}
+.logo .dot { color: var(--accent); }
+.nav-links {
+  display: flex;
+  gap: 2.2rem;
+  list-style: none;
+}
+.nav-links a {
+  font-size: 0.87rem;
+  color: var(--muted2);
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  transition: color 0.2s;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0; right: 0;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.2s;
+}
+.nav-links a:hover,
+.nav-links a.active { color: var(--text); }
+.nav-links a.active::after { transform: scaleX(1); }
+.nav-right { display: flex; gap: 0.75rem; align-items: center; }
+
+/* User badge when logged in */
+#userBadge {
+  display: none;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--navy);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.83rem;
+  color: var(--muted2);
+}
+#userBadge.visible { display: flex; }
+
+/* ============================================================
+   PAGES
+============================================================ */
+.page { display: none; min-height: 100vh; padding-top: 66px; }
+.page.active { display: block; }
+
+/* ============================================================
+   HOME — HERO
+============================================================ */
+#home { position: relative; overflow: hidden; }
+
+/* Animated grid bg */
+.grid-bg {
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,200,240,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,240,0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  animation: gridScroll 20s linear infinite;
+}
+@keyframes gridScroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 64px 64px; }
+}
+
+/* Glow orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(90px);
+  z-index: 0;
+}
+.orb-1 { width: 600px; height: 600px; background: rgba(0,90,255,0.12); top: -180px; right: -120px; }
+.orb-2 { width: 400px; height: 400px; background: rgba(0,200,240,0.07); bottom: 0; left: -100px; }
+.orb-3 { width: 300px; height: 300px; background: rgba(0,90,255,0.08); top: 40%; left: 30%; }
+
+.hero {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: calc(100vh - 66px);
+  padding: 5rem 2rem 4rem;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: rgba(0,200,240,0.07);
+  border: 1px solid rgba(0,200,240,0.22);
+  border-radius: 100px;
+  padding: 0.38rem 1.1rem;
+  font-size: 0.78rem;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  margin-bottom: 2.2rem;
+  animation: fadeUp 0.6s ease both;
+}
+.pulse-dot {
+  width: 7px; height: 7px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 2.2s ease infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.3; transform:scale(0.8); }
+}
+
+.hero h1 {
+  font-family: var(--font-head);
+  font-size: clamp(3rem, 6.5vw, 5.5rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.03em;
+  max-width: 820px;
+  margin-bottom: 1.6rem;
+  animation: fadeUp 0.7s 0.1s ease both;
+}
+.hero h1 .accent-text {
+  background: linear-gradient(130deg, var(--accent2) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p {
+  font-size: 1.05rem;
+  color: var(--muted2);
+  max-width: 500px;
+  margin-bottom: 2.8rem;
+  line-height: 1.8;
+  animation: fadeUp 0.7s 0.2s ease both;
+}
+.hero-btns {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.7s 0.3s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* Stats strip */
+.stats-strip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+  padding: 3rem 4rem;
+  margin-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+.stat-item {
+  text-align: center;
+  padding: 0 3.5rem;
+  border-right: 1px solid var(--border);
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-family: var(--font-head);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.stat-label {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+/* Quick service cards on home */
+.home-services {
+  position: relative;
+  z-index: 1;
+  padding: 5rem 4rem;
+}
+.hs-header { margin-bottom: 3rem; }
+.hs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.25rem;
+}
+.hs-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 2rem 1.75rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.hs-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,90,255,0.06), rgba(0,200,240,0.03));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.hs-card:hover {
+  border-color: rgba(0,200,240,0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+.hs-card:hover::before { opacity: 1; }
+.hs-icon {
+  width: 46px; height: 46px;
+  background: rgba(0,200,240,0.09);
+  border: 1px solid rgba(0,200,240,0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 1.3rem;
+}
+.hs-card h4 {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.55rem;
+}
+.hs-card p { font-size: 0.84rem; color: var(--muted2); line-height: 1.65; }
+.hs-arrow {
+  margin-top: 1.2rem;
+  color: var(--muted);
+  font-size: 1rem;
+  transition: color 0.2s, transform 0.2s;
+}
+.hs-card:hover .hs-arrow { color: var(--accent); transform: translateX(4px); }
+
+/* ============================================================
+   ABOUT
+============================================================ */
+#about { padding: 0; }
+.about-wrap {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 5rem 4rem;
+}
+.about-header { text-align: center; margin-bottom: 5rem; }
+.about-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5rem;
+  align-items: center;
+}
+.about-visual-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.about-visual-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+}
+.about-mini-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.mini-stat {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.4rem 1rem;
+  text-align: center;
+}
+.mini-stat span {
+  display: block;
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+.mini-stat small { font-size: 0.78rem; color: var(--muted); margin-top: 0.3rem; display: block; }
+.certs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.about-text { }
+.about-text h2 {
+  font-family: var(--font-head);
+  font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1.4rem;
+}
+.about-text p {
+  color: var(--muted2);
+  line-height: 1.85;
+  margin-bottom: 1rem;
+}
+.check-list { list-style: none; margin-top: 1.8rem; display: flex; flex-direction: column; gap: 0.85rem; }
+.check-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  font-size: 0.9rem;
+}
+.chk {
+  width: 22px; height: 22px;
+  flex-shrink: 0;
+  background: rgba(0,200,240,0.1);
+  border: 1px solid rgba(0,200,240,0.28);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  font-size: 0.65rem;
+  margin-top: 1px;
+}
+
+/* ============================================================
+   SERVICES
+============================================================ */
+#services { padding: 0; }
+.services-wrap {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 5rem 4rem;
+}
+.services-header { text-align: center; margin-bottom: 4rem; }
+.services-header .section-sub { margin: 0.8rem auto 0; }
+.svc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 1.4rem;
+}
+.svc-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.2rem 2rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.svc-card:hover {
+  border-color: rgba(0,200,240,0.35);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 50px rgba(0,0,0,0.5);
+}
+.svc-num {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+}
+.svc-card h3 {
+  font-family: var(--font-head);
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+.svc-card p {
+  font-size: 0.86rem;
+  color: var(--muted2);
+  line-height: 1.75;
+  margin-bottom: 1.4rem;
+}
+.svc-tags { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+
+/* ============================================================
+   PORTFOLIO
+============================================================ */
+#portfolio { padding: 0; }
+.portfolio-wrap {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 5rem 4rem;
+}
+.portfolio-header { text-align: center; margin-bottom: 3rem; }
+.filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 3rem;
+}
+.filter-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted2);
+  padding: 0.4rem 1.15rem;
+  border-radius: 100px;
+  font-size: 0.83rem;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+}
+.filter-btn.active,
+.filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(0,200,240,0.06);
+}
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.3rem;
+}
+.project-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.project-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(0,200,240,0.35);
+  box-shadow: 0 14px 45px rgba(0,0,0,0.5);
+}
+.proj-thumb {
+  height: 170px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+.proj-thumb::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(10,18,34,0.8));
+}
+.proj-emoji { position: relative; z-index: 1; }
+.t1 { background: linear-gradient(135deg, #00153a, #0042a0); }
+.t2 { background: linear-gradient(135deg, #071830, #0b4060); }
+.t3 { background: linear-gradient(135deg, #1a0232, #4a0880); }
+.t4 { background: linear-gradient(135deg, #002820, #005a40); }
+.t5 { background: linear-gradient(135deg, #200028, #500070); }
+.t6 { background: linear-gradient(135deg, #1a1200, #4a3200); }
+.proj-body { padding: 1.6rem; }
+.proj-body h4 {
+  font-family: var(--font-head);
+  font-size: 0.98rem;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
+.proj-body p { font-size: 0.83rem; color: var(--muted2); line-height: 1.65; margin-bottom: 1rem; }
+.proj-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.proj-cat { font-size: 0.74rem; color: var(--accent); letter-spacing: 0.05em; }
+.proj-arrow { color: var(--muted); transition: all 0.2s; }
+.project-card:hover .proj-arrow { color: var(--accent); transform: translateX(3px); }
+
+/* ============================================================
+   CONTACT
+============================================================ */
+#contact { padding: 0; }
+.contact-wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 5rem 4rem;
+}
+.contact-header { text-align: center; margin-bottom: 4rem; }
+.contact-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 4rem;
+  align-items: start;
+}
+.contact-info h3 {
+  font-family: var(--font-head);
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+.contact-info p { color: var(--muted2); line-height: 1.8; margin-bottom: 2rem; }
+.contact-items { display: flex; flex-direction: column; gap: 1rem; }
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.2s;
+}
+.contact-item:hover { border-color: var(--border2); }
+.ci-icon {
+  width: 40px; height: 40px;
+  flex-shrink: 0;
+  background: rgba(0,200,240,0.08);
+  border: 1px solid rgba(0,200,240,0.18);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+.ci-label { font-size: 0.78rem; color: var(--muted); }
+.ci-val { font-size: 0.88rem; color: var(--text); font-weight: 500; }
+
+.contact-form-box {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 2.2rem;
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.fg { margin-bottom: 1.2rem; }
+.fg label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 0.45rem; letter-spacing: 0.03em; }
+.fg input,
+.fg textarea,
+.fg select {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0.72rem 1rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  transition: border-color 0.2s;
+  appearance: none;
+}
+.fg input:focus,
+.fg textarea:focus,
+.fg select:focus { border-color: rgba(0,200,240,0.5); box-shadow: 0 0 0 3px rgba(0,200,240,0.07); }
+.fg textarea { resize: vertical; min-height: 115px; }
+.fg select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a7099' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; }
+.submit-btn {
+  width: 100%;
+  padding: 0.9rem;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin-top: 0.5rem;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.submit-btn:hover { opacity: 0.82; transform: translateY(-1px); }
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+#contactSuccess {
+  display: none;
+  text-align: center;
+  padding: 3rem 1rem;
+}
+#contactSuccess .success-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+#contactSuccess h3 { font-family: var(--font-head); font-size: 1.3rem; margin-bottom: 0.6rem; }
+#contactSuccess p { color: var(--muted2); font-size: 0.9rem; }
+
+/* ============================================================
+   LOGIN / REGISTER MODAL
+============================================================ */
+#modalOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+}
+#modalOverlay.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 18px;
+  padding: 2.6rem;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  animation: modalIn 0.25s ease;
+}
+@keyframes modalIn {
+  from { opacity:0; transform:scale(0.95) translateY(10px); }
+  to   { opacity:1; transform:scale(1) translateY(0); }
+}
+.modal-close {
+  position: absolute;
+  top: 1.1rem; right: 1.1rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-brand {
+  text-align: center;
+  margin-bottom: 1.8rem;
+}
+.modal-brand .logo { font-size: 1.35rem; }
+.modal-brand p { font-size: 0.82rem; color: var(--muted); margin-top: 0.25rem; }
+.modal-tabs {
+  display: flex;
+  background: var(--bg3);
+  border-radius: 9px;
+  padding: 3px;
+  margin-bottom: 1.8rem;
+}
+.modal-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--muted2);
+  padding: 0.55rem;
+  border-radius: 7px;
+  font-size: 0.88rem;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+}
+.modal-tab.active {
+  background: var(--navy);
+  color: var(--text);
+  font-weight: 500;
+}
+.mfg { margin-bottom: 1.05rem; }
+.mfg label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 0.4rem; }
+.mfg input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+.mfg input:focus { border-color: rgba(0,200,240,0.5); box-shadow: 0 0 0 3px rgba(0,200,240,0.07); }
+.modal-submit {
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.82rem;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  border: none;
+  border-radius: 9px;
+  color: #fff;
+  font-size: 0.93rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+  transition: opacity 0.2s;
+}
+.modal-submit:hover { opacity: 0.82; }
+.modal-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.modal-divider {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin: 1.1rem 0;
+  position: relative;
+}
+.modal-divider::before,
+.modal-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 38%;
+  height: 1px;
+  background: var(--border);
+}
+.modal-divider::before { left: 0; }
+.modal-divider::after { right: 0; }
+.social-btn {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0.72rem;
+  color: var(--text);
+  font-size: 0.87rem;
+  font-family: var(--font-body);
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  transition: border-color 0.2s;
+}
+.social-btn:hover { border-color: var(--border2); }
+.msg { font-size: 0.82rem; margin-top: 0.7rem; padding: 0.65rem 0.9rem; border-radius: 8px; }
+.msg-err { background: rgba(255,60,60,0.1); color: #ff6060; border: 1px solid rgba(255,60,60,0.2); }
+.msg-ok  { background: rgba(0,224,160,0.1); color: var(--success); border: 1px solid rgba(0,224,160,0.2); }
+
+/* ============================================================
+   FOOTER
+============================================================ */
+.site-footer {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  padding: 3rem 4rem;
+  text-align: center;
+}
+.footer-logo { font-family: var(--font-head); font-weight: 800; font-size: 1.2rem; margin-bottom: 1rem; }
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+.footer-links a { font-size: 0.85rem; color: var(--muted2); transition: color 0.2s; }
+.footer-links a:hover { color: var(--accent); }
+.footer-copy { font-size: 0.8rem; color: var(--muted); }
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+@media (max-width: 900px) {
+  #navbar { padding: 0 1.5rem; }
+  .nav-links { display: none; }
+  .about-layout,
+  .contact-layout { grid-template-columns: 1fr; gap: 2.5rem; }
+  .hero h1 { font-size: 2.6rem; }
+  .stats-strip { padding: 2rem 1.5rem; }
+  .stat-item { padding: 0 1.5rem; }
+  .home-services,
+  .about-wrap,
+  .services-wrap,
+  .portfolio-wrap,
+  .contact-wrap { padding: 3rem 1.5rem; }
+  .site-footer { padding: 2rem 1.5rem; }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== NAVBAR ===================== -->
+<nav id="navbar" role="navigation" aria-label="주 메뉴">
+  <div class="logo">NEXUS<span class="dot">.</span>SYS</div>
+  <ul class="nav-links">
+    <li><a href="#" class="active" onclick="showPage('home',this);return false;">홈</a></li>
+    <li><a href="#" onclick="showPage('about',this);return false;">소개</a></li>
+    <li><a href="#" onclick="showPage('services',this);return false;">서비스</a></li>
+    <li><a href="#" onclick="showPage('portfolio',this);return false;">포트폴리오</a></li>
+    <li><a href="#" onclick="showPage('contact',this);return false;">문의</a></li>
+  </ul>
+  <div class="nav-right">
+    <div id="userBadge">
+      <span>👤</span>
+      <span id="userEmail"></span>
+      <button class="btn btn-ghost" style="padding:0.3rem 0.8rem;font-size:0.78rem;" onclick="logout()">로그아웃</button>
+    </div>
+    <button class="btn btn-ghost" id="loginBtn" onclick="openModal('login')">로그인</button>
+    <button class="btn btn-primary" onclick="showPage('contact',null);return false;">무료 상담</button>
+  </div>
+</nav>
+
+<!-- ===================== HOME ===================== -->
+<div id="home" class="page active">
+  <div class="grid-bg" aria-hidden="true"></div>
+  <div class="orb orb-1" aria-hidden="true"></div>
+  <div class="orb orb-2" aria-hidden="true"></div>
+  <div class="orb orb-3" aria-hidden="true"></div>
+
+  <section class="hero">
+    <div class="hero-badge">
+      <span class="pulse-dot" aria-hidden="true"></span>
+      IT 인프라 · 네트워크 · DX 컨설팅
+    </div>
+    <h1>디지털 전환의<br><span class="accent-text">새로운 기준</span>을<br>제시합니다</h1>
+    <p>엔터프라이즈급 IT 인프라 설계부터 디지털 전환(DX) 전략 수립까지 — 검증된 전문가가 처음부터 끝까지 함께합니다.</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary btn-lg" onclick="showPage('contact',null)">무료 컨설팅 신청</button>
+      <button class="btn btn-ghost btn-lg" onclick="showPage('services',null)">서비스 살펴보기 →</button>
+    </div>
+  </section>
+
+  <div class="stats-strip" aria-label="주요 실적">
+    <div class="stat-item"><div class="stat-num">150+</div><div class="stat-label">완료 프로젝트</div></div>
+    <div class="stat-item"><div class="stat-num">98%</div><div class="stat-label">고객 만족도</div></div>
+    <div class="stat-item"><div class="stat-num">12년</div><div class="stat-label">업력</div></div>
+    <div class="stat-item"><div class="stat-num">60+</div><div class="stat-label">전문 인력</div></div>
+  </div>
+
+  <section class="home-services">
+    <div class="hs-header">
+      <div class="section-tag">CORE SERVICES</div>
+      <h2 class="section-title">핵심 역량</h2>
+      <p class="section-sub">IT 인프라 전 영역에 걸친 통합 솔루션을 제공합니다</p>
+    </div>
+    <div class="hs-grid">
+      <div class="hs-card" onclick="showPage('services',null)" role="button" tabindex="0">
+        <div class="hs-icon" aria-hidden="true">🏗️</div>
+        <h4>IT 인프라 설계</h4>
+        <p>서버·스토리지·클라우드 아키텍처 설계 및 구축</p>
+        <div class="hs-arrow">→</div>
+      </div>
+      <div class="hs-card" onclick="showPage('services',null)" role="button" tabindex="0">
+        <div class="hs-icon" aria-hidden="true">🌐</div>
+        <h4>네트워크 구축</h4>
+        <p>기업용 LAN/WAN/SD-WAN 설계 및 보안 네트워크</p>
+        <div class="hs-arrow">→</div>
+      </div>
+      <div class="hs-card" onclick="showPage('services',null)" role="button" tabindex="0">
+        <div class="hs-icon" aria-hidden="true">🔄</div>
+        <h4>DX 전환 전략</h4>
+        <p>디지털 전환 로드맵 수립 및 스마트 업무 환경 구성</p>
+        <div class="hs-arrow">→</div>
+      </div>
+      <div class="hs-card" onclick="showPage('services',null)" role="button" tabindex="0">
+        <div class="hs-icon" aria-hidden="true">🛡️</div>
+        <h4>보안 솔루션</h4>
+        <p>Zero Trust 기반 보안 체계 및 컴플라이언스 관리</p>
+        <div class="hs-arrow">→</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="footer-logo">NEXUS<span class="dot">.</span>SYS</div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('home',null);return false;">홈</a>
+      <a href="#" onclick="showPage('about',null);return false;">소개</a>
+      <a href="#" onclick="showPage('services',null);return false;">서비스</a>
+      <a href="#" onclick="showPage('portfolio',null);return false;">포트폴리오</a>
+      <a href="#" onclick="showPage('contact',null);return false;">문의</a>
+    </div>
+    <p class="footer-copy">© 2025 NEXUS SYSTEMS Co., Ltd. All rights reserved. | 서울특별시 강남구 테헤란로 123, 10층</p>
+  </footer>
+</div>
+
+<!-- ===================== ABOUT ===================== -->
+<div id="about" class="page">
+  <div class="about-wrap">
+    <div class="about-header">
+      <div class="section-tag">ABOUT US</div>
+      <h2 class="section-title">믿을 수 있는 IT 파트너</h2>
+      <p class="section-sub" style="margin:0.8rem auto 0;">2013년 창립 이래, 국내 100여 기업의 디지털 전환을 성공적으로 이끌어온 전문 컨설팅 기업입니다</p>
+    </div>
+    <div class="about-layout">
+      <div>
+        <div class="about-visual-card">
+          <div class="section-tag">PERFORMANCE</div>
+          <h3 style="font-family:var(--font-head);font-size:1.3rem;margin-bottom:0.3rem;">검증된 실적</h3>
+          <div class="about-mini-grid">
+            <div class="mini-stat"><span>150+</span><small>완료 프로젝트</small></div>
+            <div class="mini-stat"><span>98%</span><small>고객 만족도</small></div>
+            <div class="mini-stat"><span>12년</span><small>축적된 노하우</small></div>
+            <div class="mini-stat"><span>60+</span><small>전문 인력</small></div>
+          </div>
+          <div class="certs-row">
+            <span class="tag">ISO 27001</span>
+            <span class="tag">CISCO 파트너</span>
+            <span class="tag">AWS Advanced</span>
+            <span class="tag">Azure Expert</span>
+            <span class="tag">ISMS-P 인증</span>
+          </div>
+        </div>
+      </div>
+      <div class="about-text">
+        <div class="section-tag">OUR STORY</div>
+        <h2>복잡한 IT,<br>단순하게 해결합니다</h2>
+        <p>NEXUS SYSTEMS는 기업의 IT 환경을 단순히 구축하는 것을 넘어, 비즈니스 성장을 가속화하는 디지털 인프라를 설계합니다.</p>
+        <p>클라우드 마이그레이션, 네트워크 현대화, 사이버 보안 강화까지 — 모든 과정에서 고객과 함께 성장합니다.</p>
+        <ul class="check-list">
+          <li><div class="chk" aria-hidden="true">✓</div><span>엔터프라이즈급 기술력과 스타트업의 민첩함</span></li>
+          <li><div class="chk" aria-hidden="true">✓</div><span>프로젝트 완료 후 24/7 유지보수 지원</span></li>
+          <li><div class="chk" aria-hidden="true">✓</div><span>업종별 맞춤형 IT 전략 수립</span></li>
+          <li><div class="chk" aria-hidden="true">✓</div><span>보안 중심의 설계 방법론 (Security by Design)</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="footer-logo">NEXUS<span class="dot">.</span>SYS</div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('home',null);return false;">홈</a>
+      <a href="#" onclick="showPage('contact',null);return false;">문의</a>
+    </div>
+    <p class="footer-copy">© 2025 NEXUS SYSTEMS Co., Ltd. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- ===================== SERVICES ===================== -->
+<div id="services" class="page">
+  <div class="services-wrap">
+    <div class="services-header">
+      <div class="section-tag">WHAT WE DO</div>
+      <h2 class="section-title">전문 서비스</h2>
+      <p class="section-sub">IT 인프라의 모든 영역을 커버하는 통합 솔루션</p>
+    </div>
+    <div class="svc-grid">
+      <div class="svc-card">
+        <div class="svc-num">01</div>
+        <h3>IT 인프라 설계 · 구축</h3>
+        <p>서버 가상화, 하이퍼컨버지드 인프라(HCI), 클라우드 하이브리드 환경 설계 및 구축. 가용성 99.9% 이상을 보장하는 엔터프라이즈 아키텍처를 제공합니다.</p>
+        <div class="svc-tags">
+          <span class="tag">VMware</span><span class="tag">Hyper-V</span><span class="tag">Nutanix</span><span class="tag">AWS</span><span class="tag">Azure</span>
+        </div>
+      </div>
+      <div class="svc-card">
+        <div class="svc-num">02</div>
+        <h3>엔터프라이즈 네트워크</h3>
+        <p>기업 규모에 최적화된 LAN/WAN 설계, SD-WAN 도입, Wi-Fi 6 구축. 높은 가용성과 보안을 동시에 만족하는 네트워크 환경을 구현합니다.</p>
+        <div class="svc-tags">
+          <span class="tag">Cisco</span><span class="tag">Juniper</span><span class="tag">SD-WAN</span><span class="tag">Wi-Fi 6</span>
+        </div>
+      </div>
+      <div class="svc-card">
+        <div class="svc-num">03</div>
+        <h3>DX 디지털 전환</h3>
+        <p>현업 분석부터 로드맵 수립, 시스템 전환까지. RPA, AI 도입, 스마트 오피스 구축을 통해 업무 효율을 극대화합니다.</p>
+        <div class="svc-tags">
+          <span class="tag">RPA</span><span class="tag">AI/ML</span><span class="tag">스마트오피스</span><span class="tag">ERP</span>
+        </div>
+      </div>
+      <div class="svc-card">
+        <div class="svc-num">04</div>
+        <h3>사이버 보안</h3>
+        <p>Zero Trust 아키텍처, SOC 구축, 취약점 진단 및 침투 테스트. ISMS-P, ISO 27001 인증 취득 지원까지 보안 전 주기를 관리합니다.</p>
+        <div class="svc-tags">
+          <span class="tag">Zero Trust</span><span class="tag">SOC</span><span class="tag">ISMS-P</span><span class="tag">펜테스트</span>
+        </div>
+      </div>
+      <div class="svc-card">
+        <div class="svc-num">05</div>
+        <h3>클라우드 마이그레이션</h3>
+        <p>온프레미스에서 멀티클라우드로의 안전하고 효율적인 전환. 비용 최적화와 운영 자동화를 동시에 실현합니다.</p>
+        <div class="svc-tags">
+          <span class="tag">AWS</span><span class="tag">Azure</span><span class="tag">GCP</span><span class="tag">FinOps</span>
+        </div>
+      </div>
+      <div class="svc-card">
+        <div class="svc-num">06</div>
+        <h3>IT 운영 · 유지보수</h3>
+        <p>24/7 모니터링, NOC 운영, 헬프데스크 지원. SLA 기반의 체계적인 IT 운영 서비스로 비즈니스 연속성을 보장합니다.</p>
+        <div class="svc-tags">
+          <span class="tag">NOC</span><span class="tag">24/7 모니터링</span><span class="tag">SLA</span><span class="tag">ITIL</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="footer-logo">NEXUS<span class="dot">.</span>SYS</div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('home',null);return false;">홈</a>
+      <a href="#" onclick="showPage('contact',null);return false;">문의</a>
+    </div>
+    <p class="footer-copy">© 2025 NEXUS SYSTEMS Co., Ltd. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- ===================== PORTFOLIO ===================== -->
+<div id="portfolio" class="page">
+  <div class="portfolio-wrap">
+    <div class="portfolio-header">
+      <div class="section-tag">OUR WORK</div>
+      <h2 class="section-title">주요 프로젝트</h2>
+      <p class="section-sub" style="margin:0.8rem auto 0;">다양한 산업에서 성공적으로 수행한 프로젝트 사례</p>
+    </div>
+    <div class="filter-bar" role="group" aria-label="프로젝트 필터">
+      <button class="filter-btn active" onclick="filterProjects('all',this)">전체</button>
+      <button class="filter-btn" onclick="filterProjects('infra',this)">인프라</button>
+      <button class="filter-btn" onclick="filterProjects('network',this)">네트워크</button>
+      <button class="filter-btn" onclick="filterProjects('dx',this)">DX 전환</button>
+      <button class="filter-btn" onclick="filterProjects('security',this)">보안</button>
+    </div>
+    <div class="portfolio-grid" id="portfolioGrid">
+      <div class="project-card" data-cat="infra">
+        <div class="proj-thumb t1"><span class="proj-emoji">🏦</span></div>
+        <div class="proj-body">
+          <h4>대형 금융사 하이브리드 클라우드 전환</h4>
+          <p>온프레미스 레거시 시스템을 AWS 하이브리드 환경으로 무중단 마이그레이션. 운영 비용 35% 절감.</p>
+          <div class="proj-meta"><span class="proj-cat">인프라</span><span class="proj-arrow">→</span></div>
+        </div>
+      </div>
+      <div class="project-card" data-cat="network">
+        <div class="proj-thumb t2"><span class="proj-emoji">🏭</span></div>
+        <div class="proj-body">
+          <h4>제조기업 스마트팩토리 네트워크</h4>
+          <p>30개 공장 연결 SD-WAN 구축, OT/IT 통합 네트워크 설계. 생산성 42% 향상.</p>
+          <div class="proj-meta"><span class="proj-cat">네트워크</span><span class="proj-arrow">→</span></div>
+        </div>
+      </div>
+      <div class="project-card" data-cat="dx">
+        <div class="proj-thumb t3"><span class="proj-emoji">🏥</span></div>
+        <div class="proj-body">
+          <h4>병원그룹 디지털 전환 전략</h4>
+          <p>EMR 클라우드 전환, AI 진단 보조 시스템 도입, 스마트 병원 환경 구축.</p>
+          <div class="proj-meta"><span class="proj-cat">DX 전환</span><span class="proj-arrow">→</span></div>
+        </div>
+      </div>
+      <div class="project-card" data-cat="security">
+        <div class="proj-thumb t4"><span class="proj-emoji">🔐</span></div>
+        <div class="proj-body">
+          <h4>공공기관 Zero Trust 보안체계</h4>
+          <p>정부 기관 ISMS-P 인증 취득 지원, Zero Trust 아키텍처 설계 및 SOC 구축.</p>
+          <div class="proj-meta"><span class="proj-cat">보안</span><span class="proj-arrow">→</span></div>
+        </div>
+      </div>
+      <div class="project-card" data-cat="infra">
+        <div class="proj-thumb t5"><span class="proj-emoji">🛒</span></div>
+        <div class="proj-body">
+          <h4>이커머스 인프라 고도화</h4>
+          <p>트래픽 10배 급증 대응, 멀티리전 DR 구축, 99.99% 가용성 달성.</p>
+          <div class="proj-meta"><span class="proj-cat">인프라</span><span class="proj-arrow">→</span></div>
+        </div>
+      </div>
+      <div class="project-card" data-cat="dx">
+        <div class="proj-thumb t6"><span class="proj-emoji">🏗️</span></div>
+        <div class="proj-body">
+          <h4>건설사 RPA/AI 업무 자동화</h4>
+          <p>200개 반복 업무 RPA 자동화, AI 기반 견적 시스템 도입. 인건비 28% 절감.</p>
+          <div class="proj-meta"><span class="proj-cat">DX 전환</span><span class="proj-arrow">→</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="footer-logo">NEXUS<span class="dot">.</span>SYS</div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('home',null);return false;">홈</a>
+      <a href="#" onclick="showPage('contact',null);return false;">문의</a>
+    </div>
+    <p class="footer-copy">© 2025 NEXUS SYSTEMS Co., Ltd. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- ===================== CONTACT ===================== -->
+<div id="contact" class="page">
+  <div class="contact-wrap">
+    <div class="contact-header">
+      <div class="section-tag">GET IN TOUCH</div>
+      <h2 class="section-title">문의하기</h2>
+      <p class="section-sub" style="margin:0.8rem auto 0;">어떤 규모의 프로젝트든 첫 상담은 무료입니다</p>
+    </div>
+    <div class="contact-layout">
+      <div class="contact-info">
+        <h3>함께 시작해요</h3>
+        <p>요구사항을 말씀해 주시면 최적의 솔루션과 견적을 빠르게 제안드립니다.</p>
+        <div class="contact-items">
+          <div class="contact-item">
+            <div class="ci-icon">📧</div>
+            <div><div class="ci-label">이메일</div><div class="ci-val">contact@nexussys.co.kr</div></div>
+          </div>
+          <div class="contact-item">
+            <div class="ci-icon">📞</div>
+            <div><div class="ci-label">전화</div><div class="ci-val">02-1234-5678</div></div>
+          </div>
+          <div class="contact-item">
+            <div class="ci-icon">📍</div>
+            <div><div class="ci-label">주소</div><div class="ci-val">서울 강남구 테헤란로 123, 10층</div></div>
+          </div>
+          <div class="contact-item">
+            <div class="ci-icon">⏰</div>
+            <div><div class="ci-label">운영시간</div><div class="ci-val">평일 09:00 – 18:00</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact-form-box">
+        <div id="contactFormArea">
+          <div class="form-row">
+            <div class="fg"><label>성함 *</label><input type="text" id="cName" placeholder="홍길동" required></div>
+            <div class="fg"><label>연락처 *</label><input type="tel" id="cPhone" placeholder="010-0000-0000" required></div>
+          </div>
+          <div class="fg"><label>이메일 *</label><input type="email" id="cEmail" placeholder="email@company.com" required></div>
+          <div class="fg"><label>회사명</label><input type="text" id="cCompany" placeholder="회사명을 입력해주세요"></div>
+          <div class="fg">
+            <label>문의 유형</label>
+            <select id="cType">
+              <option>IT 인프라 구축</option>
+              <option>네트워크 설계</option>
+              <option>DX 전환 전략</option>
+              <option>사이버 보안</option>
+              <option>클라우드 마이그레이션</option>
+              <option>기타 문의</option>
+            </select>
+          </div>
+          <div class="fg"><label>문의 내용 *</label><textarea id="cMessage" placeholder="프로젝트 개요나 문의 사항을 자유롭게 작성해주세요" required></textarea></div>
+          <div id="contactMsg"></div>
+          <button class="submit-btn" id="contactSubmitBtn" onclick="submitContact()">문의 보내기 →</button>
+        </div>
+        <div id="contactSuccess">
+          <div class="success-icon">✅</div>
+          <h3>문의가 접수되었습니다!</h3>
+          <p>영업일 1일 이내에 담당자가 연락드리겠습니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="footer-logo">NEXUS<span class="dot">.</span>SYS</div>
+    <div class="footer-links">
+      <a href="#" onclick="showPage('home',null);return false;">홈</a>
+      <a href="#" onclick="showPage('about',null);return false;">소개</a>
+    </div>
+    <p class="footer-copy">© 2025 NEXUS SYSTEMS Co., Ltd. All rights reserved.</p>
+  </footer>
+</div>
+
+<!-- ===================== LOGIN MODAL ===================== -->
+<div id="modalOverlay" role="dialog" aria-modal="true" aria-label="로그인" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="닫기">✕</button>
+    <div class="modal-brand">
+      <div class="logo">NEXUS<span class="dot">.</span>SYS</div>
+      <p>고객 포털에 로그인하세요</p>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tabLogin" onclick="switchTab('login')">로그인</button>
+      <button class="modal-tab" id="tabRegister" onclick="switchTab('register')">회원가입</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="loginForm">
+      <div class="mfg"><label>이메일</label><input type="email" id="loginEmail" placeholder="email@company.com"></div>
+      <div class="mfg"><label>비밀번호</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+      <div id="loginMsg"></div>
+      <button class="modal-submit" id="loginSubmitBtn" onclick="doLogin()">로그인</button>
+      <div class="modal-divider">또는</div>
+      <button class="social-btn" onclick="doSocialLogin('google')">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+        Google로 로그인
+      </button>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerForm" style="display:none">
+      <div class="mfg"><label>이름</label><input type="text" id="regName" placeholder="홍길동"></div>
+      <div class="mfg"><label>이메일</label><input type="email" id="regEmail" placeholder="email@company.com"></div>
+      <div class="mfg"><label>비밀번호 (8자 이상)</label><input type="password" id="regPassword" placeholder="••••••••"></div>
+      <div class="mfg"><label>비밀번호 확인</label><input type="password" id="regPasswordConfirm" placeholder="••••••••"></div>
+      <div id="registerMsg"></div>
+      <button class="modal-submit" id="registerSubmitBtn" onclick="doRegister()">회원가입</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SCRIPTS ===================== -->
+<script>
+// ============================================================
+// SUPABASE CONFIG
+// ============================================================
+// ⚠️ 아래 두 값을 Supabase 프로젝트의 실제 값으로 교체하세요.
+// https://supabase.com → 프로젝트 → Settings → API
+const SUPABASE_URL = 'https://cuufegbmmmnsmcpunmhd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1dWZlZ2JtbW1uc21jcHVubWhkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MDQ2ODksImV4cCI6MjA5NTA4MDY4OX0.lm_9aOdmbniOUYe3XXpl4l1AFIpGajQERrgg0NTJteU';
+
+let supabase = null;
+
+function initSupabase() {
+  if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+    console.warn('[NEXUS] Supabase 미설정 — 로컬 모드로 동작합니다.');
+    return;
+  }
+  try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    checkSession();
+  } catch(e) {
+    console.error('[NEXUS] Supabase 초기화 실패:', e);
+  }
+}
+
+// ============================================================
+// SESSION
+// ============================================================
+async function checkSession() {
+  if (!supabase) return;
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) updateUserUI(session.user);
+
+  supabase.auth.onAuthStateChange((_event, session) => {
+    updateUserUI(session ? session.user : null);
+  });
+}
+
+function updateUserUI(user) {
+  const badge  = document.getElementById('userBadge');
+  const loginBtn = document.getElementById('loginBtn');
+  const emailEl = document.getElementById('userEmail');
+  if (user) {
+    emailEl.textContent = user.email;
+    badge.classList.add('visible');
+    loginBtn.style.display = 'none';
+  } else {
+    badge.classList.remove('visible');
+    loginBtn.style.display = '';
+  }
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn      = document.getElementById('loginSubmitBtn');
+  const msgEl    = document.getElementById('loginMsg');
+
+  if (!email || !password) { showMsg(msgEl, '이메일과 비밀번호를 입력해주세요.', 'err'); return; }
+
+  if (!supabase) {
+    showMsg(msgEl, '⚠️ Supabase 미설정 (데모 모드)', 'ok');
+    setTimeout(closeModal, 1500);
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '로그인 중...';
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  btn.disabled = false;
+  btn.textContent = '로그인';
+
+  if (error) { showMsg(msgEl, error.message, 'err'); }
+  else { closeModal(); }
+}
+
+async function doRegister() {
+  const name    = document.getElementById('regName').value.trim();
+  const email   = document.getElementById('regEmail').value.trim();
+  const pw      = document.getElementById('regPassword').value;
+  const pw2     = document.getElementById('regPasswordConfirm').value;
+  const btn     = document.getElementById('registerSubmitBtn');
+  const msgEl   = document.getElementById('registerMsg');
+
+  if (!name || !email || !pw) { showMsg(msgEl, '모든 항목을 입력해주세요.', 'err'); return; }
+  if (pw.length < 8) { showMsg(msgEl, '비밀번호는 8자 이상이어야 합니다.', 'err'); return; }
+  if (pw !== pw2) { showMsg(msgEl, '비밀번호가 일치하지 않습니다.', 'err'); return; }
+
+  if (!supabase) {
+    showMsg(msgEl, '⚠️ Supabase 미설정 (데모 모드)', 'ok');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '처리 중...';
+  const { error } = await supabase.auth.signUp({
+    email, password: pw,
+    options: { data: { full_name: name } }
+  });
+  btn.disabled = false;
+  btn.textContent = '회원가입';
+
+  if (error) { showMsg(msgEl, error.message, 'err'); }
+  else { showMsg(msgEl, '✅ 이메일을 확인해 인증을 완료해주세요!', 'ok'); }
+}
+
+async function doSocialLogin(provider) {
+  if (!supabase) { alert('Supabase 설정 후 사용 가능합니다.'); return; }
+  await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: window.location.href } });
+}
+
+async function logout() {
+  if (supabase) await supabase.auth.signOut();
+  updateUserUI(null);
+}
+
+// ============================================================
+// CONTACT FORM
+// ============================================================
+async function submitContact() {
+  const name    = document.getElementById('cName').value.trim();
+  const phone   = document.getElementById('cPhone').value.trim();
+  const email   = document.getElementById('cEmail').value.trim();
+  const company = document.getElementById('cCompany').value.trim();
+  const type    = document.getElementById('cType').value;
+  const message = document.getElementById('cMessage').value.trim();
+  const btn     = document.getElementById('contactSubmitBtn');
+  const msgEl   = document.getElementById('contactMsg');
+
+  if (!name || !phone || !email || !message) {
+    showMsg(msgEl, '필수 항목(*)을 모두 입력해주세요.', 'err');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '전송 중...';
+
+  if (supabase) {
+    const { error } = await supabase.from('inquiries').insert([
+      { name, phone, email, company, inquiry_type: type, message }
+    ]);
+    if (error) {
+      showMsg(msgEl, '전송 실패: ' + error.message, 'err');
+      btn.disabled = false;
+      btn.textContent = '문의 보내기 →';
+      return;
+    }
+  }
+
+  // 성공
+  document.getElementById('contactFormArea').style.display = 'none';
+  document.getElementById('contactSuccess').style.display  = 'block';
+}
+
+// ============================================================
+// NAV / PAGE
+// ============================================================
+function showPage(id, linkEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  if (linkEl) linkEl.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(tab) {
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  switchTab(tab || 'login');
+  clearMsgs();
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+function switchTab(tab) {
+  document.getElementById('loginForm').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('tabLogin').classList.toggle('active',    tab === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+  clearMsgs();
+}
+function clearMsgs() {
+  ['loginMsg','registerMsg','contactMsg'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+}
+
+// ============================================================
+// PORTFOLIO FILTER
+// ============================================================
+function filterProjects(cat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.project-card').forEach(card => {
+    card.style.display = (cat === 'all' || card.dataset.cat === cat) ? 'block' : 'none';
+  });
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function showMsg(el, text, type) {
+  el.innerHTML = `<div class="msg msg-${type === 'err' ? 'err' : 'ok'}">${text}</div>`;
+}
+
+// Keyboard: ESC closes modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// Init
+initSupabase();
+</script>
+</body>
+</html>
